@@ -1,0 +1,26 @@
+{
+  "7931801900": {
+    "title": "North Beach, single person stay, private rooms for rent",
+    "neighborhood": "north beach",
+    "price": "$900",
+    "url": "https://sfbay.craigslist.org/sfc/roo/d/san-francisco-north-beach-single-person/7931801900.html",
+    "draft_id": "r4366447856336533980",
+    "drafted_at": "2026-05-17"
+  },
+  "7934758430": {
+    "title": "Furnished Room in Hayes Valley",
+    "neighborhood": "hayes valley",
+    "price": "$1,500",
+    "url": "https://sfbay.craigslist.org/sfc/roo/d/san-francisco-furnished-room-in-hayes/7934758430.html",
+    "draft_id": "r-7572606087976871045",
+    "drafted_at": "2026-05-17"
+  },
+  "7933498825": {
+    "title": "Room for Rent in a Low Key-Household",
+    "neighborhood": "mission district",
+    "price": "$1,240",
+    "url": "https://sfbay.craigslist.org/sfc/roo/d/san-francisco-room-for-rent-in-low-key/7933498825.html",
+    "draft_id": "r9073579033063497879",
+    "drafted_at": "2026-05-17"
+  }
+}
