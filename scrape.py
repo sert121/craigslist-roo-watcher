@@ -60,6 +60,33 @@ SHORT_TERM_PATTERNS = [
     r"\bweekly only\b", r"\b30[- ]day\b",
 ]
 
+# SRO / boarding-house signals — reject these (user wants shared apartments,
+# not single-room-occupancy / community-bath-and-kitchen buildings).
+SRO_PATTERNS = [
+    r"\bsingle room occupancy\b", r"\bs\.?r\.?o\.?\b",
+    r"\b(?:weekly|nightly) (?:rate|rent|stay)\b", r"\bper week\b",
+    r"\bcommunity (?:bathroom|kitchen|bath|dining)\b",
+    r"\bboarding\s*house\b", r"\bresidential hotel\b",
+    r"\b[3-9]\s+private rooms?\b",         # "8 private rooms" — multi-room SRO
+    r"\b\d{2,}\s+(?:private )?rooms?\b",   # "14 rooms" — likely SRO
+    r"\b(?:multiple|several)\s+(?:private\s+)?rooms?\s+(?:available|for rent)",
+    r"\bbathrooms?\s+per\s+floor\b",
+]
+
+# Shared-apartment / roommate-situation signals — require at least one.
+SHARED_APT_PATTERNS = [
+    r"\bshared?\s+(?:apartment|apt|flat|house|home|unit|victorian)\b",
+    r"\b(?:room|house|flat)mates?\b",
+    r"\bshare(?:s|d)?\s+(?:common\s+areas?|the\s+(?:kitchen|bathroom|space))",
+    r"\bwith\s+(?:my\s+|two\s+|three\s+|four\s+|five\s+)?(?:other\s+)?(?:roommate|housemate)",
+    r"\bshar(?:e|ing)\s+(?:a|an|our|the|my)?\s*(?:\d+\s*br|apartment|flat|house|home|space|place|bath|kitchen|with)",
+    r"\bcurrent\s+(?:roommate|housemate|tenant|residents?)",
+    r"\blooking\s+for\s+(?:a\s+|our\s+|someone\s+to\s+)?(?:roommate|housemate|flatmate|fourth|third|fifth|sixth)",
+    r"\b(?:our|the)\s+(?:apartment|flat|house|home)\b",
+    r"\b\d+(?:br|bed|bedroom)[/\s].*(?:apartment|flat|house|home|unit)\b",
+    r"\bjoin\s+(?:us|our)\b",
+]
+
 MONTHS = {
     "jan": 1, "feb": 2, "mar": 3, "apr": 4, "may": 5, "jun": 6,
     "jul": 7, "aug": 8, "sep": 9, "oct": 10, "nov": 11, "dec": 12,
@@ -208,17 +235,23 @@ def availability_ok(attrs: str, desc: str) -> tuple[bool, str]:
     return avail <= AVAIL_CUTOFF, label
 
 
-def looks_fair(desc: str) -> tuple[bool, str]:
-    """Return (ok, reason). Rejects too-short, scammy, or short-term posts."""
+def looks_fair(desc: str, title: str = "") -> tuple[bool, str]:
+    """Return (ok, reason). Rejects too-short, scammy, short-term, SRO,
+    or non-shared-apartment posts."""
     if not desc or len(desc) < 80:
         return False, "description too short"
-    low = desc.lower()
+    blob = f"{title}\n{desc}".lower()
     for pat in SCAM_PATTERNS:
-        if re.search(pat, low):
-            return False, f"scam signal: {pat}"
+        if re.search(pat, blob):
+            return False, "scam signal"
     for pat in SHORT_TERM_PATTERNS:
-        if re.search(pat, low):
-            return False, f"short-term only: {pat}"
+        if re.search(pat, blob):
+            return False, "short-term only"
+    for pat in SRO_PATTERNS:
+        if re.search(pat, blob):
+            return False, "SRO / boarding-house"
+    if not any(re.search(pat, blob) for pat in SHARED_APT_PATTERNS):
+        return False, "no shared-apartment signal"
     return True, "ok"
 
 
@@ -259,7 +292,7 @@ def main():
             skipped["hood"] += 1
             continue
 
-        fair, reason = looks_fair(detail["description"])
+        fair, reason = looks_fair(detail["description"], li["title"])
         if not fair:
             skipped["unfair"] += 1
             print(f"#   skip {pid} ({reason})", file=sys.stderr)
